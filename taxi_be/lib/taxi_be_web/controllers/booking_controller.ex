@@ -12,7 +12,6 @@ defmodule TaxiBeWeb.BookingController do
     )
 
     conn
-    # "/api/bookings/" <> booking_id)
     |> put_resp_header("Location", "/api/bookings/" <> booking_id)
     |> put_status(:created)
     |> json(%{msg: "We are processing your request"})

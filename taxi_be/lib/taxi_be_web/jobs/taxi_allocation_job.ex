@@ -38,11 +38,11 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
       }
     )
 
-    timer = Process.send_after(self(), :timeout, 60_000)
+    timer = Process.send_after(self(), TimeOut, 10_000)
     {:noreply, %{request: request, contacted_taxi: taxi, candidates: tl(list_of_taxis)}}
   end
 
-  def handle_info(:timeout, state) do
+  def handle_info(TimeOut, state) do
     auxiliary(state)
   end
 
@@ -52,7 +52,7 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
       "dropoff_address" => dropoff_address
     } = request
 
-    {request, Enum.random([70, 90, 120, 150])}
+    {request, Enum.random([34, 70, 90, 120, 150, 220, 500])}
   end
 
   def notify_customer_ride_fare({request, fare}) do
@@ -105,7 +105,7 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
         )
 
         if leftover != [] do
-          Process.send_after(self(), :timeout, 60_000)
+          Process.send_after(self(), TimeOut, 10_000)
         end
 
         {:noreply, %{request: request, contacted_taxi: n_taxi, candidates: leftover}}
