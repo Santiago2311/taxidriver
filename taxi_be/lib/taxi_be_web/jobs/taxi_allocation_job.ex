@@ -38,7 +38,7 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
       }
     )
 
-    timer = Process.send_after(self(), TimeOut, 10_000)
+    timer = Process.send_after(self(), TimeOut, 20_000)
     {:noreply, %{request: request, contacted_taxi: taxi, candidates: tl(list_of_taxis)}}
   end
 
@@ -105,7 +105,7 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
         )
 
         if leftover != [] do
-          Process.send_after(self(), TimeOut, 10_000)
+          Process.send_after(self(), TimeOut, 20_000)
         end
 
         {:noreply, %{request: request, contacted_taxi: n_taxi, candidates: leftover}}
