@@ -1,0 +1,16 @@
+POST http://localhost:4000/api/bookings HTTP/1.1
+content-type: application/json
+
+{
+    "pickup-address": "CAPU, Puebla, Mexico",
+    "dropoff-address": "Paseo Destino, Puebla, Mexico",
+    "username": "Luciano"
+}
+
+###
+POST http://localhost:4000/api/bookings/5bdbc5fc-34da-11f0-9df3-54ee75812613
+content-type: application/json
+
+{
+
+}
