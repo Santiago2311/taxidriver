@@ -38,7 +38,10 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
       }
     )
 
-    timer = Process.send_after(self(), TimeOut, 20_000)
+    # El timmer se ajusto a 10 seg debido a que
+    # las nuevas versiones de Elixir limitan el tiempo
+    # de comunicación en los procesos
+    timer = Process.send_after(self(), TimeOut, 10_000)
     {:noreply, %{request: request, contacted_taxi: taxi, candidates: tl(list_of_taxis)}}
   end
 
@@ -105,7 +108,10 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
         )
 
         if leftover != [] do
-          Process.send_after(self(), TimeOut, 20_000)
+          # El envio del proceso se ajusto a 10 seg debido a que
+          # las nuevas versiones de Elixir limitan el tiempo
+          # de comunicación en los procesos
+          Process.send_after(self(), TimeOut, 10_000)
         end
 
         {:noreply, %{request: request, contacted_taxi: n_taxi, candidates: leftover}}
