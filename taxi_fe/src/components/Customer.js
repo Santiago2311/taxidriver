@@ -17,7 +17,9 @@ function Customer(props) {
       console.log("Received", data);
       setMsg2(data.msg);
     });
-    channel.join();
+    channel.join()
+    .receive("OK", resp => console.log("Joined successfully", resp))
+    .receive("error", resp => console.error("Unable to join", resp));
   },[props]);
 
   let submit = () => {
@@ -78,7 +80,7 @@ function Customer(props) {
             color="error" 
             style={{marginLeft: '10px'}}
           >
-            Cancel Booking
+            Cancel Boking
           </Button>
         )}
       </div>
