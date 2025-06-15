@@ -28,7 +28,6 @@ function Customer(props) {
 
   let submit = () => {
     setMsg("");
-    setMsg2("");
 
     fetch(`http://localhost:4000/api/bookings`, {
       method: 'POST',
@@ -64,7 +63,7 @@ function Customer(props) {
         id: bookingId
       })
     }).then(resp => resp.json()).then(data => {
-      
+
       setMsg(data.msg);
       setBookingId(null);
     });
