@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import Button from '@mui/material/Button'
-
 import socket from '../services/taxi_socket';
 import { TextField } from '@mui/material';
 
@@ -9,6 +8,7 @@ function Customer(props) {
   let [dropOffAddress, setDropOffAddress] = useState("Triangulo Las Animas, Puebla, Mexico");
   let [msg, setMsg] = useState("");
   let [msg2, setMsg2] = useState("");
+  let [bookingId, setBookingId] = useState(null);
 
   useEffect(() => {
     let channel = socket.channel("customer:" + props.username, {token: "123"});
@@ -24,8 +24,38 @@ function Customer(props) {
     fetch(`http://localhost:4000/api/bookings`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({pickup_address: pickupAddress, dropoff_address: dropOffAddress, username: props.username})
-    }).then(resp => resp.json()).then(data => setMsg(data.msg));
+      body: JSON.stringify({
+        pickup_address: pickupAddress, 
+        dropoff_address: dropOffAddress, 
+        username: props.username
+      })
+    })
+    .then(resp => resp.json())
+    .then(data => {
+      setBookingId(data.id);
+      setMsg(data.msg);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      setMsg('Error processing request');
+    });
+  };
+
+  let cancel = () => {
+    if (!bookingId) return;
+    
+    fetch(`http://localhost:4000/api/bookings/${bookingId}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        action: 'cancel',
+        username: props.username,
+        id: bookingId
+      })
+    }).then(resp => resp.json()).then(data => {
+      setMsg(data.msg);
+      setBookingId(null);
+    });
   };
 
   return (
@@ -41,6 +71,16 @@ function Customer(props) {
             onChange={ev => setDropOffAddress(ev.target.value)}
             value={dropOffAddress}/>
         <Button onClick={submit} variant="outlined" color="primary">Submit</Button>
+        {bookingId && (
+          <Button 
+            onClick={cancel} 
+            variant="outlined" 
+            color="error" 
+            style={{marginLeft: '10px'}}
+          >
+            Cancel Booking
+          </Button>
+        )}
       </div>
       <div style={{backgroundColor: "lightcyan", height: "50px"}}>
         {msg}

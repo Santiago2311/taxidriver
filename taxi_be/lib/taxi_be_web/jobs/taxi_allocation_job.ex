@@ -39,7 +39,8 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
       )
     end)
 
-    time = Process.send_after(self(), TimeOut, 90_000)
+    # timeout de 1.5 minutos (90 segundos)
+    time = Process.send_after(self(), :TimeOut, 90_000)
 
     {:noreply,
      %{
@@ -47,21 +48,22 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
        contacted_taxis: contacted_taxis,
        accepted_taxis: [],
        time: time,
-       accepted?: false
+       accepted?: false,
+       taxi_arrival_time: nil
      }}
   end
 
-  def handle_info(TimeOut, %{accepted?: true} = state) do
+  def handle_info(:TimeOut, %{accepted?: true} = state) do
     {:noreply, state}
   end
 
-  def handle_info(TimeOut, %{accepted?: false, request: request} = state) do
+  def handle_info(:TimeOut, %{accepted?: false, request: request} = state) do
     %{"username" => customer_username} = request
 
     TaxiBeWeb.Endpoint.broadcast(
       "customer:" <> customer_username,
       "booking_request",
-      %{msg: "Por el momento no se encuentra disponible ninguna unidad"}
+      %{msg: "Ningún taxi aceptó tu solicitud. Por favor intenta de nuevo."}
     )
 
     {:noreply, state}
@@ -99,17 +101,70 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
     else
       Process.cancel_timer(time)
 
+      # llegada del taxi en 5 minutos
+      taxi_arrival_time = DateTime.utc_now() |> DateTime.add(300, :second)
+
       TaxiBeWeb.Endpoint.broadcast(
         "customer:" <> customer_username,
         "booking_request",
         %{msg: "Tu taxi está en camino y llegará en 5 minutos"}
       )
 
-      {:noreply, %{state | accepted?: true, accepted_taxis: [conductor]}}
+      {:noreply,
+       %{state |
+         accepted?: true,
+         accepted_taxis: [conductor],
+         taxi_arrival_time: taxi_arrival_time
+       }}
     end
   end
 
   def handle_cast({:handle_reject, msg}, state) do
+    {:noreply, state}
+  end
+
+  def handle_cast({:handle_cancel, _msg}, %{accepted?: false} = state) do
+    %{request: request} = state
+    %{"username" => customer_username} = request
+
+    TaxiBeWeb.Endpoint.broadcast(
+      "customer:" <> customer_username,
+      "booking_request",
+      %{msg: "Solicitud cancelada sin cargo."}
+    )
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:handle_cancel, _msg}, %{accepted?: true, taxi_arrival_time: taxi_arrival_time} = state) do
+    %{request: request} = state
+    %{"username" => customer_username} = request
+
+    current_time = DateTime.utc_now()
+    seconds_until_arrival = DateTime.diff(taxi_arrival_time, current_time)
+
+    if seconds_until_arrival > 180 do
+      # más de 3 minutos hasta la llegada del taxi
+      # no cargo por cancelación
+      TaxiBeWeb.Endpoint.broadcast(
+        "customer:" <> customer_username,
+        "booking_request",
+        %{msg: "Solicitud cancelada sin cargo."}
+      )
+    else
+      # cargo de 20 por cancelación
+      TaxiBeWeb.Endpoint.broadcast(
+        "customer:" <> customer_username,
+        "booking_request",
+        %{msg: "Solicitud cancelada. Se aplicará un cargo de 20."}
+      )
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_info(:taxi_arrived, %{accepted?: true, taxi_arrival_time: taxi_arrival_time, request: %{"username" => customer_username}} = state) do
+    TaxiBeWeb.Endpoint.broadcast("customer:" <> customer_username, "booking_request", %{msg: "Tu taxi ha llegado. Inicia tu viaje"})
     {:noreply, state}
   end
 

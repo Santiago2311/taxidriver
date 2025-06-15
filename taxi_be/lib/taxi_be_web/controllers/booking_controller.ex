@@ -1,6 +1,7 @@
 defmodule TaxiBeWeb.BookingController do
   use TaxiBeWeb, :controller
   alias TaxiBeWeb.TaxiAllocationJob
+
   def create(conn, req) do
     IO.inspect(req)
     booking_id = UUID.uuid1()
@@ -9,23 +10,30 @@ defmodule TaxiBeWeb.BookingController do
       String.to_atom(booking_id)
     )
     conn
+    |> put_resp_header("access-control-allow-origin", "*") # Add CORS header
     |> put_resp_header("Location", "/api/bookings/" <> booking_id)
     |> put_status(:created)
-    |> json(%{msg: "We are processing your request"})
+    |> json(%{
+      msg: "We are processing your request",
+      id: booking_id # INCLUDE ID IN RESPONSE!!!
+    })
   end
-  def update(conn, %{"action" => "accept", "username" => username, "id" => id}) do
 
-    GenServer.cast(String.to_atom(id), {:handle_accept, "accept"})
+  def update(conn, %{"action" => "accept", "username" => username, "id" => id}) do
+    GenServer.cast(String.to_atom(id), {:handle_accept, %{"nickname" => username}})
     IO.inspect("'#{username}' is accepting a booking request")
     json(conn, %{msg: "We will process your acceptance"})
   end
+
   def update(conn, %{"action" => "reject", "username" => username, "id" => id} = msg) do
     GenServer.cast(String.to_atom(id), {:handle_reject, msg})
     IO.inspect("'#{username}' is rejecting a booking request")
     json(conn, %{msg: "We will process your rejection"})
   end
-  def update(conn, %{"action" => "cancel", "username" => username, "id" => _id}) do
+
+  def update(conn, %{"action" => "cancel", "username" => username, "id" => id}) do
+    GenServer.cast(String.to_atom(id), {:handle_cancel, %{username: username}})
     IO.inspect("'#{username}' is cancelling a booking request")
-    json(conn, %{msg: "We will process your cancelation"})
+    json(conn, %{msg: "We will process your cancellation"})
   end
 end
