@@ -39,7 +39,7 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
       )
     end)
 
-    time = Process.send_after(self(), TimeOut, 90_000)
+    time = Process.send_after(self(), :timeout, 90_000)
 
     {:noreply,
      %{
@@ -51,11 +51,11 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
      }}
   end
 
-  def handle_info(TimeOut, %{accepted?: true} = state) do
+  def handle_info(:timeout, %{accepted?: true} = state) do
     {:noreply, state}
   end
 
-  def handle_info(TimeOut, %{accepted?: false, request: request} = state) do
+  def handle_info(:timeout, %{accepted?: false, request: request} = state) do
     %{"username" => customer_username} = request
 
     TaxiBeWeb.Endpoint.broadcast(
