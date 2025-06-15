@@ -20,9 +20,16 @@ function Customer(props) {
     channel.join()
     .receive("OK", resp => console.log("Joined successfully", resp))
     .receive("error", resp => console.error("Unable to join", resp));
-  },[props]);
+
+    return () => {
+      channel.leave();
+    };
+  },[props.username]);
 
   let submit = () => {
+    setMsg("");
+    setMsg2("");
+
     fetch(`http://localhost:4000/api/bookings`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -45,7 +52,9 @@ function Customer(props) {
 
   let cancel = () => {
     if (!bookingId) return;
-    
+    setMsg("");
+    setMsg2("");
+
     fetch(`http://localhost:4000/api/bookings/${bookingId}`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -55,6 +64,7 @@ function Customer(props) {
         id: bookingId
       })
     }).then(resp => resp.json()).then(data => {
+      
       setMsg(data.msg);
       setBookingId(null);
     });
@@ -80,7 +90,7 @@ function Customer(props) {
             color="error" 
             style={{marginLeft: '10px'}}
           >
-            Cancel Boking
+            Cancel Booking
           </Button>
         )}
       </div>
