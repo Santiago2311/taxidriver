@@ -143,7 +143,7 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
     current_time = DateTime.utc_now()
     seconds_until_arrival = DateTime.diff(taxi_arrival_time, current_time)
 
-    if seconds_until_arrival > 180 do
+    if seconds_until_arrival > 10 do
       # más de 3 minutos hasta la llegada del taxi
       # no cargo por cancelación
       TaxiBeWeb.Endpoint.broadcast(
