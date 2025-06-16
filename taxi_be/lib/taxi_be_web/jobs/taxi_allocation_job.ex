@@ -39,7 +39,6 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
       )
     end)
 
-    # timeout de 1.5 minutos (90 segundos)
     time = Process.send_after(self(), :TimeOut, 90_000)
 
     {:noreply,
@@ -101,7 +100,6 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
     else
       Process.cancel_timer(time)
 
-      # llegada del taxi en 5 minutos
       taxi_arrival_time = DateTime.utc_now() |> DateTime.add(300, :second)
 
       TaxiBeWeb.Endpoint.broadcast(
@@ -144,15 +142,12 @@ defmodule TaxiBeWeb.TaxiAllocationJob do
     seconds_until_arrival = DateTime.diff(taxi_arrival_time, current_time)
 
     if seconds_until_arrival > 10 do
-      # más de 3 minutos hasta la llegada del taxi
-      # no cargo por cancelación
       TaxiBeWeb.Endpoint.broadcast(
         "customer:" <> customer_username,
         "booking_request",
         %{msg: "Solicitud cancelada sin cargo."}
       )
     else
-      # cargo de 20 por cancelación
       TaxiBeWeb.Endpoint.broadcast(
         "customer:" <> customer_username,
         "booking_request",
